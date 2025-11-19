@@ -2,6 +2,9 @@ import { db } from "@repo/db";
 import { indexCards } from "@repo/db/schemas";
 import { createIndexCardSchema } from "@repo/zod-schema";
 import { Request, Response } from "express";
+import { expressRedisClient } from "..";
+
+const STREAM_NAME = "card_created";
 
 export const createIndexCardController = async (
   req: Request,
@@ -43,6 +46,11 @@ export const createIndexCardController = async (
       .returning();
 
     // add the added index card to the redis stream
+    await expressRedisClient.xAdd(STREAM_NAME, "*", {
+      card_id: result[0]!.id,
+    });
+
+    console.log(`Pushed to redis`);
 
     res.json({
       message: "Index Card created successfully",

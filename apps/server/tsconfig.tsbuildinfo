@@ -1,0 +1,1 @@
+{"root":["./src/index.ts","./src/controllers/auth.controller.ts","./src/controllers/index.controller.ts","./src/controllers/index_card.controller.ts","./src/middleware/auth.middleware.ts","./src/routers/auth.router.ts","./src/routers/index.router.ts","./src/routers/index.ts","./src/routers/index_card.router.ts"],"version":"5.9.3"}

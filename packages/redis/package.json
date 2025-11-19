@@ -1,5 +1,5 @@
 {
-  "name": "@repo/zod-schema",
+  "name": "@repo/redis",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -17,10 +17,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "redis": "^5.9.0"
+  },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*"
-  },
-  "dependencies": {
-    "zod": "^4.1.12"
   }
 }

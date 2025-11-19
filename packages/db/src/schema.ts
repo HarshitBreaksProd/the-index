@@ -1,3 +1,5 @@
+import { InferSelectModel } from "drizzle-orm";
+import { integer } from "drizzle-orm/pg-core";
 import {
   boolean,
   text,
@@ -92,6 +94,9 @@ export const cardChunks = pgTable("card_chunks", {
     .notNull()
     .references(() => indexCards.id, { onDelete: "cascade" }),
   chunkText: text("chunk_text").notNull(),
-  embedding: vector("embedding", { dimensions: 500 }).notNull(),
+  embedding: vector("embedding", { dimensions: 384 }).notNull(),
+  order: integer("order").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export type IndexCard = InferSelectModel<typeof indexCards>;

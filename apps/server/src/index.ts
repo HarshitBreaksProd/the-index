@@ -3,6 +3,7 @@ import "dotenv/config";
 import cors from "cors";
 import router from "./routers";
 import cookieParser from "cookie-parser";
+import { RedisClient, redisClient } from "@repo/redis";
 
 const HTTP_PORT = process.env.HTTP_PORT;
 const FRONTEND_URL = process.env.FRONTEND_URL;
@@ -11,6 +12,16 @@ const JWT_SECRET = process.env.JWT_SECRET;
 if (!HTTP_PORT || !FRONTEND_URL || !JWT_SECRET) {
   throw new Error("Some env variable is not available in server");
 }
+
+export const expressRedisClient: RedisClient = redisClient.duplicate();
+
+(async () => {
+  expressRedisClient.on("error", (err) => {
+    console.error("Redis client error in express server", err);
+  });
+  await expressRedisClient.connect();
+  console.log("Redis connected in express server");
+})();
 
 const app = express();
 

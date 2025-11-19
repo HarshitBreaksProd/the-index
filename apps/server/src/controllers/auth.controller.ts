@@ -5,6 +5,7 @@ import { users } from "@repo/db/schemas";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { eq } from "drizzle-orm";
+import { DrizzleQueryError } from "drizzle-orm";
 
 export const signupController = async (req: Request, res: Response) => {
   const body = req.body;
@@ -25,12 +26,11 @@ export const signupController = async (req: Request, res: Response) => {
 
   const password = inputs.data.password;
 
-  const hashedPassword = await bcrypt.hash(
-    password,
-    process.env.SALTROUNDS || "10"
-  );
-
   try {
+    const salt = await bcrypt.genSalt(Number(process.env.SALTROUNDS) || 10);
+
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const result = await db
       .insert(users)
       .values({
@@ -50,8 +50,19 @@ export const signupController = async (req: Request, res: Response) => {
     res.json({ message: "User signed up successfully", success: true });
   } catch (err) {
     console.log(err);
+
+    let errMessage = "Some error faced in server";
+
+    if (err instanceof DrizzleQueryError) {
+      if (err.cause?.name === "NeonDbError") {
+        if ((err.cause as unknown as { code: number }).code! == 23505) {
+          errMessage = "Email already exists";
+        }
+      }
+    }
+
     res.status(500).json({
-      message: "Some error faced in server",
+      message: errMessage,
       success: false,
     });
   }

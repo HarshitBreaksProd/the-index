@@ -5,18 +5,19 @@
   "main": "index.js",
   "exports": {
     ".": {
+      "require": "./dist/index.js",
       "import": "./dist/index.js",
       "types": "./dist/index.d.ts"
     },
     "./schemas": {
-      "import": "./dist/schema.ts",
+      "require": "./dist/schema.js",
+      "import": "./dist/schema.js",
       "types": "./dist/schema.d.ts"
     }
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc --project tsconfig.build.json",
-    "dev": "tsx --watch src/index.ts",
     "db:generate": "npx drizzle-kit generate",
     "db:migrate": "npx drizzle-kit migrate",
     "db:push": "npx drizzle-kit push"
