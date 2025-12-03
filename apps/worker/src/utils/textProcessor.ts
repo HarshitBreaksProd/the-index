@@ -1,13 +1,14 @@
 import { db } from "@repo/db";
 import { splitter } from ".";
 import { getEmbeddings } from "./embedder";
-import { cardChunks } from "@repo/db/schemas";
+import { cardChunks, indexCards } from "@repo/db/schemas";
+import { eq } from "drizzle-orm";
 
-export const textProcessor = async (sourceText: string, cardId: string) => {
+export const createTextEmbeddingsAndUpdateDb = async (
+  sourceText: string,
+  cardId: string
+) => {
   const chunks = await splitter.splitText(sourceText);
-
-  console.log(chunks);
-
   const embedding = await getEmbeddings(chunks);
 
   const cardChunksToInsert: {
@@ -27,13 +28,39 @@ export const textProcessor = async (sourceText: string, cardId: string) => {
   }
 
   try {
-    const dbInsertResult = await db
-      .insert(cardChunks)
-      .values(cardChunksToInsert);
+    await db.transaction(async (tx) => {
+      const dbInsertResult = await tx
+        .insert(cardChunks)
+        .values(cardChunksToInsert);
 
-    console.log(dbInsertResult.rowCount, " rows created in card chunks table");
+      await tx
+        .update(indexCards)
+        .set({ processedContent: sourceText, status: "completed" })
+        .where(eq(indexCards.id, cardId));
+
+      console.log(
+        dbInsertResult.rowCount,
+        " rows created in card chunks table"
+      );
+    });
   } catch (err) {
     console.log(err);
     console.log("Insertion for card chunks failed");
+  }
+};
+
+export const createTextEmbeddingsAndUpdateDbWithRetry = async (
+  sourceText: string,
+  cardId: string,
+  maxAttempts: number = 3
+) => {
+  for (let attempt = 1; attempt <= maxAttempts; attempt + 1) {
+    try {
+      await createTextEmbeddingsAndUpdateDb(sourceText, cardId);
+    } catch (err) {
+      if (attempt === maxAttempts) throw err;
+      console.log(`Retry ${attempt}/${maxAttempts}`);
+      await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
+    }
   }
 };

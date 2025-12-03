@@ -35,6 +35,30 @@ const getPage = async () => {
   return page;
 };
 
+const cleanHtmlContent = (htmlContent: string): string => {
+  const dom = new JSDOM(htmlContent);
+  const document = dom.window.document;
+
+  const scripts = document.querySelectorAll("script, style, noscript");
+  scripts.forEach((el) => el.remove());
+
+  const textContent =
+    document.body?.textContent || document.documentElement?.textContent || "";
+
+  const cleaned = textContent
+    .split(/\s+/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .join(" ")
+
+    .replace(/\s+/g, " ")
+
+    .replace(/\n\s*\n/g, "\n")
+    .trim();
+
+  return cleaned;
+};
+
 const fetchContentFromUrl = async (url: string) => {
   let page = null;
   try {
@@ -45,8 +69,6 @@ const fetchContentFromUrl = async (url: string) => {
       () => document.querySelector("*")?.outerHTML
     );
 
-    console.log(html);
-
     if (!html) {
       throw new Error(`Failed to extract HTML from ${url}`);
     }
@@ -54,23 +76,21 @@ const fetchContentFromUrl = async (url: string) => {
     const doc = new JSDOM(html, { url });
     const reader = new Readability(doc.window.document);
 
-    let heading = reader.parse()?.title;
-    let textContent = reader.parse()?.textContent;
+    let htmlContent = reader.parse()?.content;
 
-    if (!textContent) {
+    if (!htmlContent) {
       throw new Error(`Failed to parse readable content from ${url}`);
     }
 
-    console.log(textContent);
-
-    const content = textContent;
+    const textContent = cleanHtmlContent(htmlContent);
 
     console.log("URL PROCESSING COMPLETE");
     await page.close();
-    return content;
+    return textContent;
   } catch (err) {
     console.log(err);
     console.log("Url Processor error ^^^^^^^^^^^^^^^^^^^^^^^^^");
+    throw err;
   } finally {
     if (page && !page.isClosed()) {
       try {
@@ -96,8 +116,6 @@ export const fetchContentFromUrlWithRetry = async (
     }
   }
 };
-
-// create a function to gracefully close browser and redis client
 
 export const gracefulShutDownOfBrowser = async () => {
   if (BrowserInstance && BrowserInstance.connected) {

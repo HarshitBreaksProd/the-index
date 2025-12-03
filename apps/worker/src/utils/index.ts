@@ -1,7 +1,7 @@
 import { db } from "@repo/db";
 import { indexCards } from "@repo/db/schemas";
 import { eq } from "drizzle-orm";
-import { textProcessor } from "./textProcessor";
+import { createTextEmbeddingsAndUpdateDbWithRetry } from "./textProcessor";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { fetchContentFromUrlWithRetry } from "./urlProcessor";
 import { CONCURRENCY_INFO_TYPE } from "..";
@@ -24,12 +24,12 @@ export const processCard = async (
 
     switch (card.type) {
       case "text":
-        await textProcessor(card.source, card.id);
+        await createTextEmbeddingsAndUpdateDbWithRetry(card.source, card.id);
         break;
       case "pdf":
         break;
       case "url":
-        console.log("Card is of type url");
+      case "tweet":
         const textContent: string | undefined =
           await fetchContentFromUrlWithRetry(card.source);
         if (textContent === undefined) {
@@ -37,9 +37,7 @@ export const processCard = async (
             "Url processing did not happen correctly, textContent undefined"
           );
         }
-        await textProcessor(textContent, cardId);
-        break;
-      case "tweet":
+        await createTextEmbeddingsAndUpdateDbWithRetry(textContent, cardId);
         break;
       case "youtube":
         break;
