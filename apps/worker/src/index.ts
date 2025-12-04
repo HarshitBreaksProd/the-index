@@ -1,6 +1,9 @@
 import { RedisClient, redisClient } from "@repo/redis";
 import { processCard } from "./utils";
 import { gracefulShutDownOfBrowser } from "./utils/urlProcessor";
+import path from "path";
+import os from "os";
+import fs from "fs";
 
 export const workerRedisClient: RedisClient = redisClient.duplicate();
 
@@ -61,12 +64,29 @@ const main = async () => {
 
 main();
 
+function emptyDirSync(dirPath: string) {
+  const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(dirPath, entry.name);
+    if (entry.isDirectory()) {
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    } else {
+      fs.unlinkSync(fullPath);
+    }
+  }
+  console.log("Cleared the temp directory");
+}
+
 const gracefulShutDownCleanUp = async () => {
   console.log("Recieved SIGINT/SIGTERM, closing gracefully");
   shouldExit = true;
   await workerRedisClient.quit();
   console.log("Redis client closed");
   await gracefulShutDownOfBrowser();
+
+  const osTempDir = os.tmpdir();
+  emptyDirSync(osTempDir);
+
   process.exit(0);
 };
 

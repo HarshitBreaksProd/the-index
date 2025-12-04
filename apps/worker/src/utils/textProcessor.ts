@@ -57,6 +57,7 @@ export const createTextEmbeddingsAndUpdateDbWithRetry = async (
   for (let attempt = 1; attempt <= maxAttempts; attempt + 1) {
     try {
       await createTextEmbeddingsAndUpdateDb(sourceText, cardId);
+      return;
     } catch (err) {
       if (attempt === maxAttempts) throw err;
       console.log(`Retry ${attempt}/${maxAttempts}`);

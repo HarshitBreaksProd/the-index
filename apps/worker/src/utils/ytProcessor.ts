@@ -1,14 +1,11 @@
-import puppeteer, { Browser } from "puppeteer";
-import fs from "fs";
+import { chromium, Browser, Download } from "playwright";
 import path from "path";
-import os from "os";
-import { resolve } from "dns";
 
 let BrowserInstance: Browser | null = null;
 
 const getBrowser = async () => {
   if (!BrowserInstance) {
-    BrowserInstance = await puppeteer.launch({
+    BrowserInstance = await chromium.launch({
       headless: true,
       args: [
         "--no-sandbox",
@@ -37,24 +34,19 @@ const getPage = async () => {
   return page;
 };
 
-export const processYoutubeLink = async (url: string) => {
-  let page = null;
-  let tempDir = fs.mkdtempSync(
-    path.join(os.tmpdir(), `ytmp3-${Date.now()}-${crypto.randomUUID()}`)
-  );
+export const processYoutubeLinkToAudioFile = async (
+  url: string,
+  tempDir: string
+) => {
+  console.log(`Processing yt url: ${url}`);
 
+  let page = null;
   try {
     page = await getPage();
 
-    const client = await page.createCDPSession();
-    await client.send("Page.setDownloadBehavior", {
-      behavior: "allow",
-      downloadPath: tempDir,
-    });
-
     console.log("going to ytmp3");
     await page.goto("https://ytmp3.as/", {
-      waitUntil: "networkidle2",
+      waitUntil: "load",
       timeout: 60000,
     });
 
@@ -64,6 +56,8 @@ export const processYoutubeLink = async (url: string) => {
         timeout: 10000,
       }
     );
+
+    console.log("Page waited for input");
 
     const inputSelector = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll("input"));
@@ -75,36 +69,41 @@ export const processYoutubeLink = async (url: string) => {
           input.name?.toLowerCase().includes("v")
       );
       return urlInput
-        ? `input[type="${urlInput.type}"]
-          [${urlInput.id ? `id="${urlInput.id}"][` : ""}
-          ${urlInput.name ? `name="${urlInput.name}"` : ""}]`
+        ? `input[type="${urlInput.type}"]` +
+            `[${urlInput.id ? `id="${urlInput.id}"][` : ""}` +
+            `${urlInput.name ? `name="${urlInput.name}"` : ""}]`
         : 'input[type="text"]';
     });
 
     console.log("pasting yt url");
+    console.log("The input selector is", inputSelector);
     await page.type(inputSelector, url, { delay: 50 });
 
-    await page.waitForSelector(
-      'button[type="submit"], button:has-text("Convert"), button[class*="convert"]',
-      {
-        timeout: 10000,
-      }
-    );
+    console.log("page waited for download button");
 
     console.log("clicking convert button");
     await page.click('button[type="submit"]');
 
     console.log("waiting for conversion to complete");
 
+    let downloadedFile: string | null = null;
+
     try {
-      await page.waitForSelector(
-        'a[download], button:has-text("Download"), a[href*=".mp3"], a[href*="download"]',
-        { timeout: 600000 }
-      );
+      const submitBtn = page.locator('//button[text()="Download"]');
+      await submitBtn.waitFor({ timeout: 1800000 });
 
       console.log("conversion complete, clicking download");
 
-      await page.click(`button:has-text("Download")`);
+      const [download]: [Download, void] = await Promise.all([
+        page.waitForEvent("download", { timeout: 600000 }),
+        page.click('button:has-text("Download")'),
+      ]);
+
+      const finalPath = path.join(tempDir, "audio.mp3");
+
+      console.log("saving download to :", finalPath);
+      await download.saveAs(finalPath);
+      downloadedFile = finalPath;
     } catch (waitError) {
       console.log(
         "Download button not found, checking for automatic download..."
@@ -113,35 +112,17 @@ export const processYoutubeLink = async (url: string) => {
 
     console.log("waiting for file to download");
 
-    let downloadedFile: string | null = null;
-    const maxWaitTime = 600000;
-    const startTime = Date.now();
-
-    while (Date.now() - startTime < maxWaitTime) {
-      const files = fs.readdirSync(tempDir);
-      const mp3File = files.find((file) => file.endsWith(".mp3"));
-
-      if (mp3File) {
-        await new Promise((res) => setTimeout(res, 1000));
-        downloadedFile = path.join(tempDir, mp3File);
-        break;
-      }
-
-      await new Promise((res) => setTimeout(res, 500));
-    }
-
     if (!downloadedFile) {
       throw new Error(
         "Download timeout: File was not downloaded within the expected time"
       );
     }
 
-    const captions = await processAudioToText(downloadedFile);
-    return captions;
+    console.log(`The downloaded file is named: ${downloadedFile}`);
+
+    return downloadedFile;
   } catch (err) {
     console.log("Error in processing of youtube link");
     console.log(err);
   }
 };
-
-const processAudioToText = async (file: string) => {};
