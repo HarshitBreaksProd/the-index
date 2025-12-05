@@ -5,6 +5,8 @@ import path from "path";
 import os from "os";
 import fs from "fs";
 
+checkForAllEnvVars();
+
 export const workerRedisClient: RedisClient = redisClient.duplicate();
 
 const STREAM_NAME = "card_created";
@@ -19,7 +21,7 @@ export type CONCURRENCY_INFO_TYPE = typeof CONCURRENCY_INFO;
 
 const main = async () => {
   workerRedisClient.on("error", (err) => {
-    console.error("Redis client error in express server", err);
+    console.error("Redis client error in worker", err);
   });
   await workerRedisClient.connect();
   console.log("Redis connected in worker");
@@ -92,3 +94,25 @@ const gracefulShutDownCleanUp = async () => {
 
 process.on("SIGTERM", gracefulShutDownCleanUp);
 process.on("SIGINT", gracefulShutDownCleanUp);
+
+function checkForAllEnvVars() {
+  const {
+    REDIS_URL,
+    DATABASE_URL,
+    AWS_REGION,
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    S3_BUCKET,
+  } = process.env;
+
+  if (
+    !REDIS_URL ||
+    !DATABASE_URL ||
+    !AWS_REGION ||
+    !AWS_ACCESS_KEY_ID ||
+    !AWS_SECRET_ACCESS_KEY ||
+    !S3_BUCKET
+  ) {
+    throw new Error("Missing environment variables");
+  }
+}

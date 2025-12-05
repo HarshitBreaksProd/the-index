@@ -6,7 +6,10 @@ import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { fetchContentFromUrlWithRetry } from "./urlProcessor";
 import { CONCURRENCY_INFO_TYPE } from "..";
 import { processYoutubeLinkToAudioFile } from "./ytProcessor";
-import { processAudioToText } from "./audioProcessor";
+import {
+  downloadAndProcessAudioFromS3,
+  processAudioToText,
+} from "./audioProcessor";
 import fs from "fs";
 import path from "path";
 import os from "os";
@@ -70,17 +73,27 @@ export const processCard = async (
 
       case "pdf":
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
-        const text = await pdfFileToText(card.source);
-        if (text === undefined) {
+        const pdfText = await pdfFileToText(card.source);
+        if (pdfText === undefined) {
           throw new Error(
             "Url processing did not happen correctly, textContent undefined"
           );
         }
-        await createTextEmbeddingsAndUpdateDbWithRetry(text, cardId);
+        await createTextEmbeddingsAndUpdateDbWithRetry(pdfText, cardId);
         break;
 
       case "audio":
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
+        const audioText = await downloadAndProcessAudioFromS3(
+          card.source,
+          tempDir
+        );
+        if (audioText === undefined) {
+          throw new Error(
+            "Audio processing did not happen correctly, textContent undefined"
+          );
+        }
+        await createTextEmbeddingsAndUpdateDbWithRetry(audioText, cardId);
         break;
 
       case "spotify":

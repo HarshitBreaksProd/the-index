@@ -5,13 +5,10 @@ import router from "./routers";
 import cookieParser from "cookie-parser";
 import { RedisClient, redisClient } from "@repo/redis";
 
+checkForAllEnvVars();
+
 const HTTP_PORT = process.env.HTTP_PORT;
 const FRONTEND_URL = process.env.FRONTEND_URL;
-const JWT_SECRET = process.env.JWT_SECRET;
-
-if (!HTTP_PORT || !FRONTEND_URL || !JWT_SECRET) {
-  throw new Error("Some env variable is not available in server");
-}
 
 export const expressRedisClient: RedisClient = redisClient.duplicate();
 
@@ -39,3 +36,33 @@ app.use("/api/v1", router);
 app.listen(HTTP_PORT, () => {
   console.log("Express server running on port ", HTTP_PORT);
 });
+
+function checkForAllEnvVars() {
+  const {
+    HTTP_PORT,
+    FRONTEND_URL,
+    SALTROUNDS,
+    JWT_SECRET,
+    DATABASE_URL,
+    REDIS_URL,
+    AWS_REGION,
+    AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY,
+    S3_BUCKET,
+  } = process.env;
+
+  if (
+    !HTTP_PORT ||
+    !FRONTEND_URL ||
+    !SALTROUNDS ||
+    !JWT_SECRET ||
+    !DATABASE_URL ||
+    !REDIS_URL ||
+    !AWS_REGION ||
+    !AWS_ACCESS_KEY_ID ||
+    !AWS_SECRET_ACCESS_KEY ||
+    !S3_BUCKET
+  ) {
+    throw new Error("Missing environment variables");
+  }
+}
