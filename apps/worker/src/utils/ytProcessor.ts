@@ -118,11 +118,21 @@ export const processYoutubeLinkToAudioFile = async (
       );
     }
 
+    await page.close();
+
     console.log(`The downloaded file is named: ${downloadedFile}`);
 
     return downloadedFile;
   } catch (err) {
     console.log("Error in processing of youtube link");
     console.log(err);
+  } finally {
+    if (page && !page.isClosed()) {
+      try {
+        await page.close();
+      } catch (closeError) {
+        console.error(`Error closing page for ${url}:`, closeError);
+      }
+    }
   }
 };

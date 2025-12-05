@@ -1,5 +1,5 @@
 import { db } from "@repo/db";
-import { indexCards } from "@repo/db/schemas";
+import { IndexCard, indexCards } from "@repo/db/schemas";
 import { eq } from "drizzle-orm";
 import { createTextEmbeddingsAndUpdateDbWithRetry } from "./textProcessor";
 import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
@@ -10,12 +10,14 @@ import { processAudioToText } from "./audioProcessor";
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { pdfFileToText } from "./pdfProcessor";
 
 export const processCard = async (
   cardId: string,
   CONCURRENCY_INFO: CONCURRENCY_INFO_TYPE
 ) => {
   let tempDir: string | null = null;
+  let card: IndexCard | null = null;
 
   try {
     const dbSearch = await db
@@ -27,15 +29,13 @@ export const processCard = async (
       throw new Error(`Card with given id not found, Id: ${cardId}`);
     }
 
-    const card = dbSearch[0];
+    card = dbSearch[0];
 
     switch (card.type) {
       case "text":
         await createTextEmbeddingsAndUpdateDbWithRetry(card.source, card.id);
         break;
-      case "pdf":
-        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
-        break;
+
       case "url":
       case "tweet":
         const textContent: string | undefined =
@@ -47,6 +47,7 @@ export const processCard = async (
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(textContent, cardId);
         break;
+
       case "youtube":
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
         const audioFile = await processYoutubeLinkToAudioFile(
@@ -66,7 +67,24 @@ export const processCard = async (
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(captions, cardId);
         break;
+
+      case "pdf":
+        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
+        const text = await pdfFileToText(card.source);
+        if (text === undefined) {
+          throw new Error(
+            "Url processing did not happen correctly, textContent undefined"
+          );
+        }
+        await createTextEmbeddingsAndUpdateDbWithRetry(text, cardId);
+        break;
+
+      case "audio":
+        tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
+        break;
+
       case "spotify":
+        console.log("Spotify exists only for aesthetic purposes for frontend");
         break;
     }
     CONCURRENCY_INFO.activeJobs -= 1;

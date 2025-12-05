@@ -45,6 +45,7 @@ export const cardType = pgEnum("card_type", [
   "youtube",
   "tweet",
   "spotify",
+  "audio",
 ]);
 
 export const cardStatusEnum = pgEnum("card_status", [

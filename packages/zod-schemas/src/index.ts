@@ -22,6 +22,11 @@ export const createIndexSchema = z.object({
 export const createIndexCardSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
-  type: z.enum(["text", "url", "pdf", "youtube", "tweet", "spotify"]),
+  type: z.enum(["text", "url", "pdf", "youtube", "tweet", "spotify", "audio"]),
   source: z.string(),
+});
+
+export const createPreSignedUrlSchema = z.object({
+  fileName: z.string(),
+  contentType: z.string(),
 });
