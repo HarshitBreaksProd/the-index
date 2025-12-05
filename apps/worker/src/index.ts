@@ -48,13 +48,35 @@ const main = async () => {
 
         for (const message of stream?.messages!) {
           const id = message.id;
+          const cardType = message.message.card_type;
+
+          console.log("Message read from stream, card type is ", cardType);
+
+          while (
+            cardType &&
+            (cardType === "youtube" || cardType === "audio") &&
+            CONCURRENCY_INFO.activeJobs !== 0
+          ) {
+            console.log(
+              "Waiting for all tasks to finish before starting processing of yt or audio"
+            );
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
           await workerRedisClient.xAck(STREAM_NAME, CONSUMER_GROUP, id);
 
           const cardId = message.message.card_id;
-          if (cardId) {
-            CONCURRENCY_INFO.activeJobs += 1;
+          if (cardId && cardType) {
+            switch (cardType) {
+              case "youtube":
+              case "audio":
+                CONCURRENCY_INFO.activeJobs += 10;
+                break;
+              default:
+                CONCURRENCY_INFO.activeJobs += 1;
+            }
             console.log(CONCURRENCY_INFO, "CARD PROCESSING START");
-            processCard(cardId, CONCURRENCY_INFO);
+            processCard(cardId, cardType, CONCURRENCY_INFO);
           }
         }
       }

@@ -17,6 +17,7 @@ import { pdfFileToText } from "./pdfProcessor";
 
 export const processCard = async (
   cardId: string,
+  cardType: string,
   CONCURRENCY_INFO: CONCURRENCY_INFO_TYPE
 ) => {
   let tempDir: string | null = null;
@@ -100,12 +101,20 @@ export const processCard = async (
         console.log("Spotify exists only for aesthetic purposes for frontend");
         break;
     }
-    CONCURRENCY_INFO.activeJobs -= 1;
+    if (cardType === "youtube" || cardType === "audio") {
+      CONCURRENCY_INFO.activeJobs -= 10;
+    } else {
+      CONCURRENCY_INFO.activeJobs -= 1;
+    }
     cleanupTempFolder(tempDir);
 
     console.log(CONCURRENCY_INFO, "CARD PROCESSING FINISHED");
   } catch (err) {
-    CONCURRENCY_INFO.activeJobs -= 1;
+    if (cardType === "youtube" || cardType === "audio") {
+      CONCURRENCY_INFO.activeJobs -= 10;
+    } else {
+      CONCURRENCY_INFO.activeJobs -= 1;
+    }
     cleanupTempFolder(tempDir);
 
     console.log(err);

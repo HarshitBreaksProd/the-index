@@ -45,9 +45,9 @@ export const createIndexCardController = async (
       })
       .returning();
 
-    // add the added index card to the redis stream
     await expressRedisClient.xAdd(STREAM_NAME, "*", {
       card_id: result[0]!.id,
+      card_type: result[0]!.type,
     });
 
     console.log(`Pushed to redis`);
