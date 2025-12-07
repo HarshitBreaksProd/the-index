@@ -8,44 +8,45 @@ export const createTextEmbeddingsAndUpdateDb = async (
   sourceText: string,
   cardId: string
 ) => {
-  const chunks = await splitter.splitText(sourceText);
-  const embedding = await getEmbeddings(chunks);
-
-  const cardChunksToInsert: {
-    cardId: string;
-    chunkText: string;
-    embedding: number[];
-    order: number;
-  }[] = [];
-
-  for (let i = 0; i < chunks.length; i++) {
-    cardChunksToInsert.push({
-      cardId,
-      chunkText: chunks[i]!,
-      embedding: Array.from(embedding[i]!),
-      order: i + 1,
-    });
-  }
-
   try {
-    await db.transaction(async (tx) => {
-      const dbInsertResult = await tx
-        .insert(cardChunks)
-        .values(cardChunksToInsert);
+    const chunks = await splitter.splitText(sourceText);
+    const embedding = await getEmbeddings(chunks);
 
-      await tx
-        .update(indexCards)
-        .set({ processedContent: sourceText, status: "completed" })
-        .where(eq(indexCards.id, cardId));
+    const cardChunksToInsert: {
+      cardId: string;
+      chunkText: string;
+      embedding: number[];
+      order: number;
+    }[] = [];
 
-      console.log(
-        dbInsertResult.rowCount,
-        " rows created in card chunks table"
-      );
-    });
+    for (let i = 0; i < chunks.length; i++) {
+      cardChunksToInsert.push({
+        cardId,
+        chunkText: chunks[i]!,
+        embedding: Array.from(embedding[i]!),
+        order: i + 1,
+      });
+    }
+
+    try {
+      await db.transaction(async (tx) => {
+        const dbInsertResult = await tx
+          .insert(cardChunks)
+          .values(cardChunksToInsert);
+
+        await tx
+          .update(indexCards)
+          .set({ processedContent: sourceText, status: "completed" })
+          .where(eq(indexCards.id, cardId));
+      });
+    } catch (err) {
+      throw { errorMessage: "Text Embedding could not be created." };
+    }
   } catch (err) {
-    console.log(err);
-    console.log("Insertion for card chunks failed");
+    const errorMessage = (err as { errorMessage: string }).errorMessage;
+    throw errorMessage
+      ? { errorMessage }
+      : { errorMessage: "Text Embedding could not be created." };
   }
 };
 
@@ -54,13 +55,12 @@ export const createTextEmbeddingsAndUpdateDbWithRetry = async (
   cardId: string,
   maxAttempts: number = 3
 ) => {
-  for (let attempt = 1; attempt <= maxAttempts; attempt + 1) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       await createTextEmbeddingsAndUpdateDb(sourceText, cardId);
       return;
     } catch (err) {
       if (attempt === maxAttempts) throw err;
-      console.log(`Retry ${attempt}/${maxAttempts}`);
       await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }

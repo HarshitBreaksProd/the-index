@@ -16,37 +16,43 @@ export const downloadAndProcessAudioFromS3 = async (
   tempDir: string
 ) => {
   try {
-    const { Body } = await s3.send(
-      new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: source })
-    );
+    let tempFilePath: string = "";
+    try {
+      const { Body } = await s3.send(
+        new GetObjectCommand({ Bucket: process.env.S3_BUCKET, Key: source })
+      );
 
-    const tempFilePath = path.join(tempDir, source);
-    const fileStream = createWriteStream(tempFilePath);
+      tempFilePath = path.join(tempDir, source);
+      const fileStream = createWriteStream(tempFilePath);
 
-    await new Promise<void>((resolve, reject) => {
-      (Body as NodeJS.ReadableStream)
-        .pipe(fileStream)
-        .on("finish", () => {
-          console.log("File download finished");
-          resolve();
-        })
-        .on("error", () => {
-          console.log("File download failed");
-          reject();
-        });
-    });
-
+      await new Promise<void>((resolve, reject) => {
+        (Body as NodeJS.ReadableStream)
+          .pipe(fileStream)
+          .on("finish", () => {
+            resolve();
+          })
+          .on("error", () => {
+            reject();
+          });
+      });
+    } catch (err) {
+      throw {
+        errorMessage: "Accessing audio file faced some issues",
+      };
+    }
     return processAudioToText(tempFilePath);
   } catch (err) {
-    console.log("Some error with whisper could not generate text from audio");
-    console.log(err);
+    const errorMessage = (err as { errorMessage: string }).errorMessage;
+    throw {
+      errorMessage:
+        errorMessage ||
+        "Downloading and processing audio file faced some errors",
+    };
   }
 };
 
 export const processAudioToText = async (file: string) => {
   try {
-    console.log("Processing audio to text");
-
     const text = await nodewhisper(file, {
       modelName: "small.en",
       autoDownloadModelName: "small.en",
@@ -57,8 +63,7 @@ export const processAudioToText = async (file: string) => {
     const cleanedText = cleanWhisperOutput(text);
     return cleanedText;
   } catch (err) {
-    console.log("Some error with whisper could not generate text from audio");
-    console.log(err);
+    throw { errorMessage: "Whisper audio processing faces some errors" };
   }
 };
 

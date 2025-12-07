@@ -18,7 +18,6 @@ const getBrowser = async () => {
     });
 
     BrowserInstance.on("disconnected", () => {
-      console.log("Browser got disconnected");
       BrowserInstance = null;
     });
   }
@@ -70,7 +69,7 @@ const fetchContentFromUrl = async (url: string) => {
     );
 
     if (!html) {
-      throw new Error(`Failed to extract HTML from ${url}`);
+      throw { errorMessage: `Failed to extract HTML from ${url}` };
     }
 
     const doc = new JSDOM(html, { url });
@@ -79,18 +78,16 @@ const fetchContentFromUrl = async (url: string) => {
     let htmlContent = reader.parse()?.content;
 
     if (!htmlContent) {
-      throw new Error(`Failed to parse readable content from ${url}`);
+      throw { errorMessage: `Failed to parse readable content from ${url}` };
     }
 
     const textContent = cleanHtmlContent(htmlContent);
 
-    console.log("URL PROCESSING COMPLETE");
     await page.close();
     return textContent;
   } catch (err) {
-    console.log(err);
-    console.log("Url Processor error ^^^^^^^^^^^^^^^^^^^^^^^^^");
-    throw err;
+    const errorMessage = (err as { errorMessage: string }).errorMessage;
+    throw { errorMessage: errorMessage || "Failed to fetch content from url" };
   } finally {
     if (page && !page.isClosed()) {
       try {
@@ -111,7 +108,6 @@ export const fetchContentFromUrlWithRetry = async (
       return await fetchContentFromUrl(url);
     } catch (err) {
       if (attempt === maxAttempts) throw err;
-      console.log(`Retry ${attempt}/${maxAttempts}`);
       await new Promise((resolve) => setTimeout(resolve, 1000 * attempt));
     }
   }
@@ -119,7 +115,6 @@ export const fetchContentFromUrlWithRetry = async (
 
 export const gracefulShutDownOfBrowser = async () => {
   if (BrowserInstance && BrowserInstance.connected) {
-    console.log("Closing browser instance");
     await BrowserInstance.close();
   }
   process.exit(0);

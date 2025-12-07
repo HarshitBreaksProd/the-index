@@ -69,7 +69,6 @@ export const indexCards = pgTable("index_cards", {
   processedContent: text("processed_content").default(""),
   status: cardStatusEnum("status").default("pending").notNull(),
   errorMessage: text("error_message"),
-  storageUrl: text("storage_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -18,8 +18,7 @@ export const pdfFileToText = async (source: string) => {
     const cleanedText = cleanupPdfText(text);
     return cleanedText;
   } catch (err) {
-    console.log("Failed pdf to text conversion");
-    console.log(err);
+    throw { errorMessage: "Pdf text could not be extracted" };
   }
 };
 

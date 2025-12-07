@@ -24,13 +24,22 @@ export const processCard = async (
   let card: IndexCard | null = null;
 
   try {
-    const dbSearch = await db
-      .select()
-      .from(indexCards)
-      .where(eq(indexCards.id, cardId));
+    let dbSearch: IndexCard[] | undefined = undefined;
 
-    if (!dbSearch[0]) {
-      throw new Error(`Card with given id not found, Id: ${cardId}`);
+    try {
+      dbSearch = await db
+        .update(indexCards)
+        .set({
+          status: "processing",
+        })
+        .where(eq(indexCards.id, cardId))
+        .returning();
+    } catch (err) {
+      throw { errorMessage: "Database query failed to update card status" };
+    }
+
+    if (!dbSearch || !dbSearch[0]) {
+      throw { errorMessage: `Card with given id not found, Id: ${cardId}` };
     }
 
     card = dbSearch[0];
@@ -45,9 +54,10 @@ export const processCard = async (
         const textContent: string | undefined =
           await fetchContentFromUrlWithRetry(card.source);
         if (textContent === undefined) {
-          throw new Error(
-            "Url processing did not happen correctly, textContent undefined"
-          );
+          throw {
+            errorMessage:
+              "Url processing did not happen correctly, textContent undefined",
+          };
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(textContent, cardId);
         break;
@@ -59,15 +69,17 @@ export const processCard = async (
           tempDir
         );
         if (audioFile === undefined) {
-          throw new Error(
-            "Yt Url processing did not happen correctly, audioFile undefined"
-          );
+          throw {
+            errorMessage:
+              "Yt Url processing did not happen correctly, audioFile undefined",
+          };
         }
         const captions = await processAudioToText(audioFile);
         if (captions === undefined) {
-          throw new Error(
-            "Audio processing did not happen correctly, audioFile undefined"
-          );
+          throw {
+            errorMessage:
+              "Audio processing did not happen correctly, audioFile undefined",
+          };
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(captions, cardId);
         break;
@@ -76,9 +88,10 @@ export const processCard = async (
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
         const pdfText = await pdfFileToText(card.source);
         if (pdfText === undefined) {
-          throw new Error(
-            "Url processing did not happen correctly, textContent undefined"
-          );
+          throw {
+            errorMessage:
+              "Pdf processing did not happen correctly, pdfText undefined",
+          };
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(pdfText, cardId);
         break;
@@ -90,9 +103,10 @@ export const processCard = async (
           tempDir
         );
         if (audioText === undefined) {
-          throw new Error(
-            "Audio processing did not happen correctly, textContent undefined"
-          );
+          throw {
+            errorMessage:
+              "Audio processing did not happen correctly, audioText undefined",
+          };
         }
         await createTextEmbeddingsAndUpdateDbWithRetry(audioText, cardId);
         break;
@@ -109,6 +123,20 @@ export const processCard = async (
     cleanupTempFolder(tempDir);
 
     console.log(CONCURRENCY_INFO, "CARD PROCESSING FINISHED");
+
+    try {
+      await db
+        .update(indexCards)
+        .set({
+          status: "completed",
+        })
+        .where(eq(indexCards.id, cardId));
+    } catch (err) {
+      console.error(
+        `Error updating db with completed status for card ${cardId}`,
+        err
+      );
+    }
   } catch (err) {
     if (cardType === "youtube" || cardType === "audio") {
       CONCURRENCY_INFO.activeJobs -= 10;
@@ -117,8 +145,19 @@ export const processCard = async (
     }
     cleanupTempFolder(tempDir);
 
-    console.log(err);
-    console.log("Error occured in processCard ^^^^^^^^^^^^^^^^^^^^^^^^^");
+    const errorMessage = (err as { errorMessage: string }).errorMessage;
+
+    try {
+      await db
+        .update(indexCards)
+        .set({
+          errorMessage: errorMessage,
+          status: "failed",
+        })
+        .where(eq(indexCards.id, cardId));
+    } catch (err) {
+      console.error("Error updating db with error message", err);
+    }
   }
 };
 
@@ -128,11 +167,7 @@ export const splitter = new RecursiveCharacterTextSplitter({
 });
 
 const cleanupTempFolder = (tempDir: string | null) => {
-  console.log(tempDir);
-
   if (tempDir && fs.existsSync(tempDir)) {
-    console.log("Temp dir found", tempDir);
     fs.rmSync(tempDir, { recursive: true, force: true });
-    console.log("Temp folder cleanup done");
   }
 };

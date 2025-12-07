@@ -18,7 +18,6 @@ const getBrowser = async () => {
   }
 
   BrowserInstance.on("disconnected", () => {
-    console.log("Yt Browser got disconnected");
     BrowserInstance = null;
   });
   return BrowserInstance;
@@ -38,13 +37,10 @@ export const processYoutubeLinkToAudioFile = async (
   url: string,
   tempDir: string
 ) => {
-  console.log(`Processing yt url: ${url}`);
-
   let page = null;
   try {
     page = await getPage();
 
-    console.log("going to ytmp3");
     await page.goto("https://ytmp3.as/", {
       waitUntil: "load",
       timeout: 60000,
@@ -56,8 +52,6 @@ export const processYoutubeLinkToAudioFile = async (
         timeout: 10000,
       }
     );
-
-    console.log("Page waited for input");
 
     const inputSelector = await page.evaluate(() => {
       const inputs = Array.from(document.querySelectorAll("input"));
@@ -75,24 +69,13 @@ export const processYoutubeLinkToAudioFile = async (
         : 'input[type="text"]';
     });
 
-    console.log("pasting yt url");
-    console.log("The input selector is", inputSelector);
-    await page.type(inputSelector, url, { delay: 50 });
-
-    console.log("page waited for download button");
-
-    console.log("clicking convert button");
+    await page.locator(inputSelector).pressSequentially(url);
     await page.click('button[type="submit"]');
-
-    console.log("waiting for conversion to complete");
-
     let downloadedFile: string | null = null;
 
     try {
       const submitBtn = page.locator('//button[text()="Download"]');
       await submitBtn.waitFor({ timeout: 1800000 });
-
-      console.log("conversion complete, clicking download");
 
       const [download]: [Download, void] = await Promise.all([
         page.waitForEvent("download", { timeout: 600000 }),
@@ -101,7 +84,6 @@ export const processYoutubeLinkToAudioFile = async (
 
       const finalPath = path.join(tempDir, "audio.mp3");
 
-      console.log("saving download to :", finalPath);
       await download.saveAs(finalPath);
       downloadedFile = finalPath;
     } catch (waitError) {
@@ -110,22 +92,20 @@ export const processYoutubeLinkToAudioFile = async (
       );
     }
 
-    console.log("waiting for file to download");
-
     if (!downloadedFile) {
-      throw new Error(
-        "Download timeout: File was not downloaded within the expected time"
-      );
+      throw {
+        errorMessage:
+          "Download timeout: File was not downloaded within the expected time",
+      };
     }
-
     await page.close();
-
-    console.log(`The downloaded file is named: ${downloadedFile}`);
-
     return downloadedFile;
   } catch (err) {
-    console.log("Error in processing of youtube link");
-    console.log(err);
+    const errorMessage = (err as { errorMessage: string }).errorMessage;
+    throw {
+      errorMessage:
+        errorMessage || "Accessing the youtube content faced some issues",
+    };
   } finally {
     if (page && !page.isClosed()) {
       try {

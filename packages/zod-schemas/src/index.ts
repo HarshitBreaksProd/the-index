@@ -19,11 +19,45 @@ export const createIndexSchema = z.object({
   coverImageUrl: z.string(),
 });
 
+export const editIndexSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  coverImageUrl: z.string(),
+});
+
+export const changeIndexVisibilitySchema = z.object({
+  id: z.string(),
+  isPublic: z.boolean(),
+});
+
 export const createIndexCardSchema = z.object({
   title: z.string().optional(),
   description: z.string().optional(),
   type: z.enum(["text", "url", "pdf", "youtube", "tweet", "spotify", "audio"]),
   source: z.string(),
+});
+
+export const editIndexCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  description: z.string(),
+  type: z.enum(["text", "url", "pdf", "youtube", "tweet", "spotify", "audio"]),
+  source: z.string(),
+});
+
+export const changeIndexCardVisibilitySchema = z.object({
+  id: z.string(),
+  isPublic: z.boolean(),
+});
+
+export const copyIndexCardSchema = z.object({
+  id: z.string(),
+  indexId: z.string(),
+});
+
+export const retryCardProcessingSchema = z.object({
+  id: z.string(),
 });
 
 export const createPreSignedUrlSchema = z.object({
