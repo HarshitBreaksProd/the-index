@@ -1,0 +1,39 @@
+FROM node:20-alpine AS base
+
+RUN npm install -g pnpm typescript turbo
+
+WORKDIR /app
+
+COPY package.json turbo.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+COPY ./apps/server/package.json ./apps/server/tsconfig.json ./apps/server/
+
+COPY ./packages/db/package.json ./packages/db/tsconfig.build.json ./packages/db/
+COPY ./packages/embedder/package.json ./packages/embedder/tsconfig.json ./packages/embedder/
+COPY ./packages/redis/package.json ./packages/redis/tsconfig.json ./packages/redis/
+COPY ./packages/typescript-config ./packages/typescript-config
+COPY ./packages/zod-schemas/package.json ./packages/zod-schemas/tsconfig.json ./packages/zod-schemas/
+
+RUN pnpm install --frozen-lockfile
+
+COPY ./apps/server/ ./apps/server/
+
+COPY ./packages/db/ ./packages/db/
+COPY ./packages/embedder/ ./packages/embedder/
+COPY ./packages/redis/ ./packages/redis/
+COPY ./packages/typescript-config/ ./packages/typescript-config/
+COPY ./packages/zod-schemas/ ./packages/zod-schemas/
+
+RUN pnpm build
+
+RUN pnpm --filter=server --prod deploy /prod/server
+
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+COPY --from=base /prod/server ./
+
+COPY --from=base /app/apps/server/dist ./dist
+
+CMD ["node", "dist/index.js"]
