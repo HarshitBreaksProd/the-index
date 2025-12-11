@@ -1,0 +1,30 @@
+services:
+  server:
+    image: harshitbreaksprod/the-index-server:${IMAGE_TAG}
+    ports:
+      - "3000:3000"
+    environment:
+      - HTTP_PORT=${HTTP_PORT}
+      - FRONTEND_URL=${FRONTEND_URL}
+      - SALTROUNDS=${SALTROUNDS}
+      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: always
+
+  worker:
+    image: harshitbreaksprod/the-index-worker:${IMAGE_TAG}
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+    restart: always
