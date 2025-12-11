@@ -85,3 +85,7 @@ export const firstMessageSchema = z.object({
   role: z.enum(["user", "assistant"]),
   content: z.string(),
 });
+
+export const createTagSchema = z.object({
+  title: z.string(),
+});
