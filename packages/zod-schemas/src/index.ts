@@ -64,3 +64,24 @@ export const createPreSignedUrlSchema = z.object({
   fileName: z.string(),
   contentType: z.string(),
 });
+
+export const createChatSchema = z.object({
+  title: z.string(),
+  indexId: z.string(),
+});
+
+export const editChatSchema = z.object({
+  title: z.string(),
+});
+
+export const userMessageSchema = z.object({
+  chatId: z.string(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});
+
+export const firstMessageSchema = z.object({
+  indexId: z.string(),
+  role: z.enum(["user", "assistant"]),
+  content: z.string(),
+});

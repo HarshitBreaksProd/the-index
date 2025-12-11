@@ -26,6 +26,7 @@
     "@aws-sdk/client-s3": "^3.943.0",
     "@aws-sdk/s3-request-presigner": "^3.943.0",
     "@repo/db": "workspace:*",
+    "@repo/embedder": "workspace:*",
     "@repo/redis": "workspace:*",
     "@repo/zod-schema": "workspace:*",
     "bcrypt": "^6.0.0",
@@ -34,6 +35,7 @@
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
     "express": "^5.1.0",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "openai": "^6.10.0"
   }
 }

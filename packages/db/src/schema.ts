@@ -1,5 +1,5 @@
 import { InferSelectModel } from "drizzle-orm";
-import { integer } from "drizzle-orm/pg-core";
+import { integer, serial } from "drizzle-orm/pg-core";
 import {
   boolean,
   text,
@@ -55,6 +55,11 @@ export const cardStatusEnum = pgEnum("card_status", [
   "failed",
 ]);
 
+export const chatMessageRoleEnum = pgEnum("chat_message_role", [
+  "assistant",
+  "user",
+]);
+
 export const indexCards = pgTable("index_cards", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: text("title").notNull(),
@@ -97,6 +102,46 @@ export const cardChunks = pgTable("card_chunks", {
   embedding: vector("embedding", { dimensions: 384 }).notNull(),
   order: integer("order").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const chats = pgTable("chats", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  indexId: uuid("index_id")
+    .notNull()
+    .references(() => indexes.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    chatId: uuid("chat_id")
+      .notNull()
+      .references(() => chats.id, { onDelete: "cascade" }),
+    role: chatMessageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    sequenceId: serial("sequence_id").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("chat_messages_chat_id_sequence_id_idx").on(
+      table.chatId,
+      table.sequenceId
+    ),
+  ]
+);
+
+export const messageCitations = pgTable("message_citations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chatMessageId: uuid("chat_message_id")
+    .notNull()
+    .references(() => chatMessages.id, { onDelete: "cascade" }),
+  indexCardId: uuid("index_card_id")
+    .notNull()
+    .references(() => indexCards.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export type IndexCard = InferSelectModel<typeof indexCards>;

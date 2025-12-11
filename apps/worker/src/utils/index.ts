@@ -2,7 +2,6 @@ import { db } from "@repo/db";
 import { IndexCard, indexCards } from "@repo/db/schemas";
 import { eq } from "drizzle-orm";
 import { createTextEmbeddingsAndUpdateDbWithRetry } from "./textProcessor";
-import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 import { fetchContentFromUrlWithRetry } from "./urlProcessor";
 import { CONCURRENCY_INFO_TYPE } from "..";
 import { processYoutubeLinkToAudioFile } from "./ytProcessor";
@@ -160,11 +159,6 @@ export const processCard = async (
     }
   }
 };
-
-export const splitter = new RecursiveCharacterTextSplitter({
-  chunkSize: 1000,
-  chunkOverlap: 150,
-});
 
 const cleanupTempFolder = (tempDir: string | null) => {
   if (tempDir && fs.existsSync(tempDir)) {

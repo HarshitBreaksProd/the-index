@@ -22,11 +22,10 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.943.0",
     "@aws-sdk/s3-request-presigner": "^3.943.0",
-    "@langchain/textsplitters": "^1.0.0",
     "@mozilla/readability": "^0.6.0",
     "@repo/db": "workspace:*",
+    "@repo/embedder": "workspace:*",
     "@repo/redis": "workspace:*",
-    "@xenova/transformers": "^2.17.2",
     "drizzle-orm": "^0.44.7",
     "jsdom": "^27.2.0",
     "langchain": "^1.0.4",

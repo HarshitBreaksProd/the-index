@@ -49,6 +49,8 @@ function checkForAllEnvVars() {
     AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY,
     S3_BUCKET,
+    GEMINI_API_KEY,
+    OPENAI_API_KEY,
   } = process.env;
 
   if (
@@ -61,7 +63,9 @@ function checkForAllEnvVars() {
     !AWS_REGION ||
     !AWS_ACCESS_KEY_ID ||
     !AWS_SECRET_ACCESS_KEY ||
-    !S3_BUCKET
+    !S3_BUCKET ||
+    !GEMINI_API_KEY ||
+    !OPENAI_API_KEY
   ) {
     throw new Error("Missing environment variables");
   }

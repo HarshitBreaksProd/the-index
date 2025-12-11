@@ -1,6 +1,6 @@
 import { db } from "@repo/db";
-import { splitter } from ".";
-import { getEmbeddings } from "./embedder";
+import { splitter } from "@repo/embedder";
+import { getEmbeddings } from "@repo/embedder";
 import { cardChunks, indexCards } from "@repo/db/schemas";
 import { eq } from "drizzle-orm";
 

@@ -1,4 +1,5 @@
 import { DataArray, pipeline } from "@xenova/transformers";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
 
 export const getEmbeddings = async (textChunks: string[]) => {
   try {
@@ -24,3 +25,8 @@ export const getEmbeddings = async (textChunks: string[]) => {
     throw { errorMessage: "Embedder did not work properly" };
   }
 };
+
+export const splitter = new RecursiveCharacterTextSplitter({
+  chunkSize: 1000,
+  chunkOverlap: 150,
+});

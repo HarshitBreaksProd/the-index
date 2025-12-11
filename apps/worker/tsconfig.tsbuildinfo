@@ -1,1 +1,1 @@
-{"root":["./src/index.ts","./src/utils/audioprocessor.ts","./src/utils/embedder.ts","./src/utils/index.ts","./src/utils/pdfprocessor.ts","./src/utils/textprocessor.ts","./src/utils/urlprocessor.ts","./src/utils/ytprocessor.ts"],"version":"5.9.3"}
+{"root":["./src/index.ts","./src/utils/audioprocessor.ts","./src/utils/index.ts","./src/utils/pdfprocessor.ts","./src/utils/textprocessor.ts","./src/utils/urlprocessor.ts","./src/utils/ytprocessor.ts"],"version":"5.9.3"}
