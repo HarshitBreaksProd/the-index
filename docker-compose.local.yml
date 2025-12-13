@@ -1,6 +1,8 @@
 services:
   server:
-    image: harshitbreaksprod/the-index-server:${IMAGE_TAG}
+    build:
+      context: ./
+      dockerfile: apps/server/dockerfile
     ports:
       - "3000:3000"
     environment:
@@ -19,7 +21,9 @@ services:
     restart: always
 
   worker:
-    image: harshitbreaksprod/the-index-worker:${IMAGE_TAG}
+    build:
+      context: ./
+      dockerfile: apps/worker/dockerfile
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=${REDIS_URL}

@@ -33,6 +33,11 @@ RUN apt-get update -y && apt-get install -y \
     ca-certificates \
     curl \
     git \
+    cmake \
+    make \
+    g++ \
+    gcc \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 RUN npm install -g pnpm
