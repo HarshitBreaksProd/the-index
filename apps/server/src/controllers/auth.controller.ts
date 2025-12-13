@@ -54,10 +54,8 @@ export const signupController = async (req: Request, res: Response) => {
     let errMessage = "Some error faced in server";
 
     if (err instanceof DrizzleQueryError) {
-      if (err.cause?.name === "NeonDbError") {
-        if ((err.cause as unknown as { code: number }).code! == 23505) {
-          errMessage = "Email already exists";
-        }
+      if ((err.cause as unknown as { code: number }).code! == 23505) {
+        errMessage = "Email already exists";
       }
     }
 
