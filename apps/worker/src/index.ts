@@ -40,7 +40,7 @@ const main = async () => {
         CONSUMER_GROUP,
         `consumer-${process.pid}`,
         { key: STREAM_NAME, id: ">" },
-        { COUNT: 1, BLOCK: 1 }
+        { COUNT: 1, BLOCK: 0 }
       );
 
       if (streams && streams[0]) {
