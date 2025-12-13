@@ -53,7 +53,4 @@ RUN pnpx playwright install-deps chromium \
 
 RUN pnpx puppeteer browsers install chrome
 
-RUN mkdir -p models && \
-    curl -L -o models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
-
 CMD ["node", "dist/index.js"]

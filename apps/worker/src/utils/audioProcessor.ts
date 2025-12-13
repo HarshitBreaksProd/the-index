@@ -54,8 +54,8 @@ export const downloadAndProcessAudioFromS3 = async (
 export const processAudioToText = async (file: string) => {
   try {
     const text = await nodewhisper(file, {
-      modelName: "small.en",
-      autoDownloadModelName: "small.en",
+      modelName: "tiny.en",
+      autoDownloadModelName: "tiny.en",
       removeWavFileAfterTranscription: true,
       withCuda: false,
     });
