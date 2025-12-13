@@ -31,6 +31,9 @@ app.use(
   })
 );
 
+app.use("/health", async (req: express.Request, res: express.Response) => {
+  res.send("Healthy");
+});
 app.use("/api/v1", router);
 
 app.listen(HTTP_PORT, () => {
