@@ -28,12 +28,25 @@ RUN pnpm --filter=worker --prod deploy /prod/worker
 
 FROM node:22-slim AS runner
 
-RUN apt-get update -y && apt-get install -y openssl ca-certificates
+RUN apt-get update -y && apt-get install -y \
+    openssl \
+    ca-certificates \
+    curl \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 COPY --from=base /prod/worker ./
 
 COPY --from=base /app/apps/worker/dist ./dist
+
+RUN pnpx playwright install-deps chromium \
+    && pnpx playwright install chromium
+
+RUN pnpx puppeteer browsers install chrome
+
+RUN mkdir -p models && \
+    curl -L -o models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
 
 CMD ["node", "dist/index.js"]
