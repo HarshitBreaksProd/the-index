@@ -62,7 +62,11 @@ export const processCard = async (
         break;
 
       case "youtube":
+        console.log(
+          `[Worker-Utils] Processing YouTube card ${cardId}. Source: ${card.source}`
+        );
         tempDir = fs.mkdtempSync(path.join(os.tmpdir(), cardId));
+        console.log(`[Worker-Utils] Created temp directory: ${tempDir}`);
         const audioFile = await processYoutubeLinkToAudioFile(
           card.source,
           tempDir
@@ -73,6 +77,9 @@ export const processCard = async (
               "Yt Url processing did not happen correctly, audioFile undefined",
           };
         }
+        console.log(
+          `[Worker-Utils] Audio file downloaded. Processing audio to text...`
+        );
         const captions = await processAudioToText(audioFile);
         if (captions === undefined) {
           throw {
@@ -80,7 +87,11 @@ export const processCard = async (
               "Audio processing did not happen correctly, audioFile undefined",
           };
         }
+        console.log(
+          `[Worker-Utils] Captions generated. Creating embeddings...`
+        );
         await createTextEmbeddingsAndUpdateDbWithRetry(captions, cardId);
+        console.log(`[Worker-Utils] Embeddings created.`);
         break;
 
       case "pdf":
