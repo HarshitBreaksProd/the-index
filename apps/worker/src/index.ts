@@ -35,7 +35,7 @@ const main = async () => {
   }
 
   while (!shouldExit) {
-    if (CONCURRENCY_INFO.activeJobs < CONCURRENCY_INFO.limit) {
+    if (CONCURRENCY_INFO.activeJobs <= CONCURRENCY_INFO.limit) {
       const streams = await workerRedisClient.xReadGroup(
         CONSUMER_GROUP,
         `consumer-${process.pid}`,
@@ -55,7 +55,7 @@ const main = async () => {
           while (
             cardType &&
             (cardType === "youtube" || cardType === "audio") &&
-            CONCURRENCY_INFO.activeJobs !== 0
+            CONCURRENCY_INFO.limit - CONCURRENCY_INFO.activeJobs < 5
           ) {
             console.log(
               "Waiting for all tasks to finish before starting processing of yt or audio"
