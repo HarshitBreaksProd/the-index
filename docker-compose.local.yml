@@ -20,7 +20,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     restart: always
 
-  worker:
+  worker: # Audio processing does not work correctly as linux container on mac arm architecture has some tool problem
     build:
       context: ./
       dockerfile: apps/worker/dockerfile

@@ -70,7 +70,7 @@ const main = async () => {
             switch (cardType) {
               case "youtube":
               case "audio":
-                CONCURRENCY_INFO.activeJobs += 10;
+                CONCURRENCY_INFO.activeJobs += 5;
                 break;
               default:
                 CONCURRENCY_INFO.activeJobs += 1;

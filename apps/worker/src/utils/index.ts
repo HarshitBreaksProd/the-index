@@ -126,7 +126,7 @@ export const processCard = async (
         break;
     }
     if (cardType === "youtube" || cardType === "audio") {
-      CONCURRENCY_INFO.activeJobs -= 10;
+      CONCURRENCY_INFO.activeJobs -= 5;
     } else {
       CONCURRENCY_INFO.activeJobs -= 1;
     }
