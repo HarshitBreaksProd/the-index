@@ -79,3 +79,14 @@ jobs:
 
             docker compose pull
             docker compose up -d
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Save DigitalOcean Kubeconfig
+        run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
+
+      - name: Deploy to Kubernetes
+        run: kubectl set image deployment/worker-deployment worker=harshitbreaksprod/the-index-worker:${{ github.sha }}

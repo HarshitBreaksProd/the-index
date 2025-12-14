@@ -18,13 +18,13 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     restart: always
 
-  worker:
-    image: harshitbreaksprod/the-index-worker:${IMAGE_TAG}
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-      - AWS_REGION=${AWS_REGION}
-      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - S3_BUCKET=${S3_BUCKET}
-    restart: always
+  # worker:   ----->>>  WE ARE COMMENTING THIS BECAUSE WE ARE NOW DEPLOYING THIS WITH K8s
+  #   image: harshitbreaksprod/the-index-worker:${IMAGE_TAG}
+  #   environment:
+  #     - DATABASE_URL=${DATABASE_URL}
+  #     - REDIS_URL=${REDIS_URL}
+  #     - AWS_REGION=${AWS_REGION}
+  #     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+  #     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+  #     - S3_BUCKET=${S3_BUCKET}
+  #   restart: always

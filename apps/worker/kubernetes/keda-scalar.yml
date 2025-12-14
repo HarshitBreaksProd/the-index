@@ -1,0 +1,16 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: worker-scaler
+spec:
+  scaleTargetRef:
+    name: worker-deployment
+  minReplicaCount: 1
+  maxReplicaCount: 3
+  triggers:
+  - type: redis-streams
+    metadata:
+      addressFromEnv: REDIS_URL
+      stream: card_created
+      consumerGroup: card_processor_group
+      pendingEntryCount: "10"
