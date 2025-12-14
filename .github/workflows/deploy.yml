@@ -86,7 +86,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
 
       - name: Save DigitalOcean Kubeconfig
-        run: doctl kubernetes cluster kubeconfig save <your-cluster-name>
+        run: doctl kubernetes cluster kubeconfig save the-index-k8s
 
       - name: Deploy to Kubernetes
         run: kubectl set image deployment/worker-deployment worker=harshitbreaksprod/the-index-worker:${{ github.sha }}
