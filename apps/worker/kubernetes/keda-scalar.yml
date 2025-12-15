@@ -10,7 +10,10 @@ spec:
   triggers:
   - type: redis-streams
     metadata:
-      addressFromEnv: REDIS_URL
+      addressFromEnv: REDIS_HOST 
       stream: card_created
       consumerGroup: card_processor_group
       pendingEntryCount: "10"
+      enableTLS: "true"
+    authenticationRef:
+      name: keda-redis-auth

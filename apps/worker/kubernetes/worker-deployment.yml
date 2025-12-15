@@ -24,7 +24,3 @@ spec:
         envFrom:
         - secretRef:
             name: worker-secrets
-        resources:
-          requests:
-            cpu: "500m"
-            memory: "1Gi"
